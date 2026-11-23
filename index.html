@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Milk Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EDF2F7;--surface:#fff;--ink:#13233B;--muted:#5B6B82;--line:#D5DEE9;--accent:#2563C9;--accent-ink:#fff;--aaya:#CDEED8;--nbg:#FBE3DC;--nink:#A63A22;--ok:#1E8A4C;--ok-ink:#fff;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1726;--surface:#16233A;--ink:#E7EEF8;--muted:#93A4BD;--line:#263753;--accent:#6BA3F5;--accent-ink:#0E1726;--aaya:#1F5436;--nbg:#4A2219;--nink:#F3A58F;--ok:#5CCB8A;--ok-ink:#0E1726;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E1726;--surface:#16233A;--ink:#E7EEF8;--muted:#93A4BD;--line:#263753;--accent:#6BA3F5;--accent-ink:#0E1726;--aaya:#1F5436;--nbg:#4A2219;--nink:#F3A58F;--ok:#5CCB8A;--ok-ink:#0E1726;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.45 Figtree,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:480px;margin:0 auto;padding:16px 14px 40px}
+h1,h2,.big,.nav b{font-family:"Bricolage Grotesque",Figtree,system-ui,sans-serif}
+.top{display:flex;align-items:baseline;justify-content:space-between;margin:4px 2px 14px}
+h1{font-size:22px;margin:0;font-weight:800}
+#sync{font-size:12px;color:var(--muted)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.nav b{font-size:19px;font-weight:600}
+.nav button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:20px}
+.hero{background:var(--accent);color:var(--accent-ink);border-radius:20px;padding:18px 18px 16px}
+.hero small{display:block;opacity:.85;font-size:14px}
+.big{font-size:52px;font-weight:800;line-height:1.05;margin:4px 0 14px;letter-spacing:-.02em}
+.stats{display:flex;gap:22px}
+.stats div{font-size:13px;opacity:.9}
+.stats b{display:block;font-size:20px;font-family:"Bricolage Grotesque",Figtree,sans-serif}
+.card{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px}
+.adv{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.adv small{display:block;color:var(--muted);font-size:13px}
+.adv strong{display:block;font:800 28px/1.15 "Bricolage Grotesque",Figtree,sans-serif}
+.adv button{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--bg);font-weight:600}
+.quick{display:flex;gap:10px;margin:12px 0}
+.quick button{flex:1;min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-weight:600}
+.quick .pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wd{font-size:12px;color:var(--muted);text-align:center;padding:4px 0}
+.day{aspect-ratio:1/1;border-radius:12px;border:2px solid transparent;background:transparent;display:flex;align-items:center;justify-content:center;padding:0;font-size:15px;font-weight:600}
+.day.a{background:var(--aaya)}
+.day.n{background:var(--nbg);color:var(--nink);text-decoration:line-through}
+.day.f{opacity:.5}
+.day.t{border-color:var(--accent)}
+.legend{display:flex;gap:16px;margin:10px 4px 0;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:6px;vertical-align:-1px}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+.card h2{font-size:16px;margin:0 0 10px}
+.fields{display:flex;gap:10px}
+label{flex:1;font-size:13px;color:var(--muted);display:block}
+input{width:100%;margin-top:4px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:600 18px Figtree,system-ui,sans-serif;padding:0 12px}
+.bd{position:fixed;inset:0;background:rgba(5,12,25,.55);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.bd[hidden],.sheet[hidden],[hidden]{display:none}
+.sheet{width:100%;max-width:480px;max-height:90%;overflow-y:auto;background:var(--surface);border-radius:22px 22px 0 0;padding:18px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet h2{margin:0 0 12px;font-size:19px}
+.amt{margin:12px 0;font-size:15px;color:var(--muted)}
+.amt b{color:var(--ink)}
+.row{display:flex;gap:10px}
+.row button{flex:1;min-height:50px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-weight:600}
+.row .pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.row .nag{color:var(--nink)}
+.row .ok{background:var(--ok);color:var(--ok-ink);border-color:var(--ok)}
+.sheet:focus{outline:none}
+.lnk{display:block;width:100%;margin-top:8px;min-height:44px;background:none;border:0;color:var(--muted);text-decoration:underline}
+ul{list-style:none;margin:12px 0 0;padding:0}
+li{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:6px 0;font-size:15px}
+li button{background:none;border:0;color:var(--nink);min-height:40px;padding:0 6px;text-decoration:underline}
+#gate{max-width:480px;margin:0 auto;padding:48px 20px;text-align:center}
+#gate h2{font-size:22px;margin:0 0 10px}
+#gate p{color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:0}}}
+</style>
+</head>
+<body>
+<section id="gate"><h2>Loading…</h2><p>Opening your milk records.</p></section>
+
+<main id="app" hidden>
+  <div class="top"><h1>Milk Tracker</h1><span id="sync" aria-live="polite"></span></div>
+  <div class="nav">
+    <button id="prev" aria-label="Previous month">‹</button>
+    <b id="mlabel"></b>
+    <button id="next" aria-label="Next month">›</button>
+  </div>
+  <section class="hero" aria-live="polite">
+    <small>This month’s bill</small>
+    <div class="big" id="total">₹0</div>
+    <div class="stats">
+      <div><b id="sl">0 L</b>Total litres</div>
+      <div><b id="sd">0</b>Delivered</div>
+      <div><b id="sn">0</b>Skipped</div>
+    </div>
+  </section>
+  <section class="card adv">
+    <div><small id="advl">Advance balance</small><strong id="advb">₹0</strong><small id="advs"></small></div>
+    <button id="advo">Add advance</button>
+  </section>
+  <div class="quick">
+    <button class="pri" id="qa">Add today’s milk</button>
+    <button id="qn">Skip today</button>
+  </div>
+  <section class="card">
+    <div class="grid" id="wds"></div>
+    <div class="grid" id="grid"></div>
+    <div class="legend"><span><i style="background:var(--aaya)"></i>Delivered</span><span><i style="background:var(--nbg)"></i>Skipped</span></div>
+  </section>
+  <p class="hint">Tap any day to change the quantity, the rate, or mark it skipped.</p>
+  <section class="card">
+    <h2>Daily defaults</h2>
+    <div class="fields">
+      <label>Quantity (L)<input id="dl" type="number" inputmode="decimal" step="0.25" min="0"></label>
+      <label>Rate per litre (₹)<input id="dr" type="number" inputmode="decimal" step="0.5" min="0"></label>
+    </div>
+    <p class="hint">A new rate applies only to new entries. Old entries keep the rate they were saved with.</p>
+  </section>
+  <p class="hint" style="text-align:center;margin-top:16px">Your records are saved only in this browser on this phone. Clearing browser data will delete them.</p>
+</main>
+
+<div class="bd" id="bd" hidden>
+  <div class="sheet" id="sheetD" role="dialog" aria-modal="true" aria-labelledby="dt" hidden>
+    <h2 id="dt"></h2>
+    <div class="fields">
+      <label>Quantity (L)<input id="fl" type="number" inputmode="decimal" step="0.25" min="0"></label>
+      <label>Rate per litre (₹)<input id="fr" type="number" inputmode="decimal" step="0.5" min="0"></label>
+    </div>
+    <p class="amt">Amount for the day: <b id="fa">₹0</b></p>
+    <div class="row">
+      <button class="ok" id="bY">Delivered</button>
+      <button class="nag" id="bN">Skipped</button>
+    </div>
+    <button class="lnk" id="bD">Remove entry</button>
+    <button class="lnk" id="bC">Close</button>
+  </div>
+  <div class="sheet" id="sheetA" role="dialog" aria-modal="true" aria-labelledby="at" hidden>
+    <h2 id="at">Add advance</h2>
+    <div class="fields">
+      <label>Amount (₹)<input id="aa" type="number" inputmode="decimal" min="0"></label>
+    </div>
+    <p class="amt" id="ae" role="alert"></p>
+    <div class="row"><button class="pri" id="bA">Save advance</button></div>
+    <ul id="al"></ul>
+    <button class="lnk" id="bC2">Close</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var WD=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  var st={s:{l:0.5,r:60},months:{},adv:{}};
+  var col=null,q=Promise.resolve(),ready=false,tm=null,sel=null;
+  var now=new Date();
+  var view=new Date(now.getFullYear(),now.getMonth(),1);
+  var $=function(s){return document.querySelector(s)};
+  var pad=function(n){return n<10?'0'+n:''+n};
+  var f=function(x){return String(Math.round(x*100)/100)};
+  var inr=function(x){return '₹'+(Math.round(x*100)/100).toLocaleString('en-IN',{maximumFractionDigits:2})};
+  var num=function(v){var x=parseFloat(v);return isFinite(x)&&x>=0?x:null};
+  var mkey=function(y,m){return y+'-'+pad(m+1)};
+  function todayStr(){var t=new Date();return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate())}
+  function nice(s){var p=s.split('-');return parseInt(p[2],10)+' '+MONTHS[parseInt(p[1],10)-1]+' '+p[0]}
+
+  function gate(kind){
+    clearTimeout(tm);
+    var T={
+      signin:['Sign in to continue','Sign in to your Claude account, then open this link again. Your milk records are saved to the account, so you see the same data on any phone where you are signed in with it.'],
+      access:['Access needed','Ask the owner of this page to share it with you with Contributor access in the Share menu. Then open the link again.'],
+      slow:['Could not load your records','Check your internet connection and open this link again.']
+    }[kind];
+    $('#app').hidden=true;$('#gate').hidden=false;
+    $('#gate').innerHTML='<h2></h2><p></p>';
+    $('#gate h2').textContent=T[0];$('#gate p').textContent=T[1];
+  }
+
+  function status(t){$('#sync').textContent=t}
+  function put(){
+    try{localStorage.setItem('milk-tracker-v1',JSON.stringify(st));status('Saved on this phone')}catch(e){status('Could not save')}
+  }
+
+  function onData(snap){
+    snap.docs.forEach(function(d){
+      var id=d.id,x=d.data()||{};
+      if(id==='settings'){if(x.l>0&&x.r>=0)st.s={l:x.l,r:x.r}}
+      else if(id==='advance'){st.adv=x.items||{}}
+      else if(id.indexOf('m-')===0){st.months[id.slice(2)]=x.d||{}}
+    });
+    if(!ready){ready=true;clearTimeout(tm);$('#gate').hidden=true;$('#app').hidden=false;status('Saved')}
+    render();
+  }
+
+  $('#wds').innerHTML=WD.map(function(w){return '<span class="wd">'+w+'</span>'}).join('');
+
+  function render(){
+    if(!ready)return;
+    var y=view.getFullYear(),m=view.getMonth(),mk=mkey(y,m),md=st.months[mk]||{};
+    $('#mlabel').textContent=MONTHS[m]+' '+y;
+    var first=new Date(y,m,1).getDay(),n=new Date(y,m+1,0).getDate();
+    var L=0,A=0,days=0,naga=0,h='',ts=todayStr();
+    for(var i=0;i<first;i++)h+='<span></span>';
+    for(var d=1;d<=n;d++){
+      var e=md[d],c='day',ds=mk+'-'+pad(d),state='';
+      if(e&&e.l){L+=e.l;A+=e.l*e.r;days++;c+=' a';state=', delivered'}
+      else if(e&&e.n){naga++;c+=' n';state=', skipped'}
+      else if(ds>ts){c+=' f'}
+      if(ds===ts)c+=' t';
+      h+='<button class="'+c+'" data-k="'+ds+'" aria-label="'+d+' '+MONTHS[m]+state+'">'+d+'</button>';
+    }
+    $('#grid').innerHTML=h;
+    $('#total').textContent=inr(A);
+    $('#sl').textContent=f(L)+' L';
+    $('#sd').textContent=days;
+    $('#sn').textContent=naga;
+    var paid=0,k;
+    for(k in st.adv){if(advMonth(st.adv[k])===mk)paid+=st.adv[k].a||0}
+    var bal=Math.round((paid-A)*100)/100;
+    $('#advl').textContent=(bal<0?'Amount due for ':'Advance left for ')+MONTHS[m];
+    $('#advb').textContent=inr(Math.abs(bal));
+    $('#advs').textContent='Paid '+inr(paid)+', used '+inr(A)+' this month';
+    if(document.activeElement!==$('#dl'))$('#dl').value=st.s.l;
+    if(document.activeElement!==$('#dr'))$('#dr').value=st.s.r;
+  }
+
+  function showSheet(which){$('#bd').hidden=false;$('#sheetD').hidden=which!=='D';$('#sheetA').hidden=which!=='A';var sh=which==='D'?$('#sheetD'):$('#sheetA');sh.setAttribute('tabindex','-1');sh.focus()}
+  function closeSheet(){$('#bd').hidden=true;sel=null}
+
+  function dayAmt(){
+    var l=num($('#fl').value),r=num($('#fr').value);
+    $('#fa').textContent=(l!=null&&r!=null)?inr(l*r):'Enter valid values';
+  }
+  function openDay(ds){
+    var p=ds.split('-'),mk=p[0]+'-'+p[1],d=String(parseInt(p[2],10));
+    sel={m:mk,d:d};
+    var e=(st.months[mk]||{})[d]||{};
+    $('#dt').textContent=nice(ds);
+    $('#fl').value=e.l!=null?e.l:st.s.l;
+    $('#fr').value=e.r!=null?e.r:st.s.r;
+    $('#bD').hidden=!(e.l||e.n);
+    dayAmt();showSheet('D');
+  }
+  function setDay(mk,d,val){
+    var md=st.months[mk]=st.months[mk]||{};
+    if(val)md[d]=val;else delete md[d];
+    put('m-'+mk,{d:md});render();
+  }
+
+  $('#grid').addEventListener('click',function(ev){
+    var b=ev.target.closest('[data-k]');if(b)openDay(b.getAttribute('data-k'));
+  });
+  $('#fl').addEventListener('input',dayAmt);
+  $('#fr').addEventListener('input',dayAmt);
+  $('#bY').addEventListener('click',function(){
+    var l=num($('#fl').value),r=num($('#fr').value);
+    if(!l||r==null){dayAmt();return}
+    setDay(sel.m,sel.d,{l:l,r:r});closeSheet();
+  });
+  $('#bN').addEventListener('click',function(){setDay(sel.m,sel.d,{n:1});closeSheet()});
+  $('#bD').addEventListener('click',function(){setDay(sel.m,sel.d,null);closeSheet()});
+  $('#bC').addEventListener('click',closeSheet);
+  $('#bC2').addEventListener('click',closeSheet);
+  $('#bd').addEventListener('click',function(ev){if(ev.target===this)closeSheet()});
+  document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&!$('#bd').hidden)closeSheet()});
+
+  $('#prev').addEventListener('click',function(){view.setMonth(view.getMonth()-1);render()});
+  $('#next').addEventListener('click',function(){view.setMonth(view.getMonth()+1);render()});
+
+  function quick(val){
+    var t=new Date();view=new Date(t.getFullYear(),t.getMonth(),1);
+    var ds=todayStr(),mk=ds.slice(0,7),d=String(t.getDate());
+    if((st.months[mk]||{})[d]){render();openDay(ds);return}
+    setDay(mk,d,val);
+  }
+  $('#qa').addEventListener('click',function(){quick({l:st.s.l,r:st.s.r})});
+  $('#qn').addEventListener('click',function(){quick({n:1})});
+
+  function setDefaults(){
+    var l=num($('#dl').value),r=num($('#dr').value);
+    if(l>0&&r!=null){st.s={l:l,r:r};put('settings',st.s)}
+    render();
+  }
+  $('#dl').addEventListener('change',setDefaults);
+  $('#dr').addEventListener('change',setDefaults);
+
+  function advMonth(x){return x.m||(x.t||'').slice(0,7)}
+  function curMk(){return mkey(view.getFullYear(),view.getMonth())}
+  function advList(){
+    var mk=curMk(),ids=Object.keys(st.adv).filter(function(id){return advMonth(st.adv[id])===mk}).sort().reverse();
+    var ul=$('#al');ul.innerHTML='';
+    ids.forEach(function(id){
+      var li=document.createElement('li'),sp=document.createElement('span'),bt=document.createElement('button'),x=st.adv[id];
+      sp.textContent=inr(x.a)+(x.t?' added on '+nice(x.t):'');
+      bt.textContent='Remove';bt.setAttribute('data-r',id);
+      li.appendChild(sp);li.appendChild(bt);ul.appendChild(li);
+    });
+  }
+  $('#advo').addEventListener('click',function(){
+    $('#aa').value='';$('#ae').textContent='';
+    $('#at').textContent='Advance for '+MONTHS[view.getMonth()]+' '+view.getFullYear();
+    advList();showSheet('A');
+  });
+  $('#bA').addEventListener('click',function(){
+    var a=num($('#aa').value);
+    if(!a){$('#ae').textContent='Enter the advance amount.';return}
+    st.adv['a'+Date.now()]={m:curMk(),t:todayStr(),a:a};
+    put('advance',{items:st.adv});render();closeSheet();
+  });
+  $('#al').addEventListener('click',function(ev){
+    var id=ev.target.getAttribute&&ev.target.getAttribute('data-r');
+    if(!id)return;
+    delete st.adv[id];put('advance',{items:st.adv});render();advList();
+  });
+
+  function init(){
+    try{var raw=localStorage.getItem('milk-tracker-v1');if(raw){var p=JSON.parse(raw);if(p&&p.s&&p.months&&p.adv)st=p}}catch(e){}
+    ready=true;$('#gate').hidden=true;$('#app').hidden=false;status('Saved on this phone');render();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
