@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Milk Tracker</title>
+<title>Milk Tracker: daily milk, skipped days and advance tracker</title>
+<meta name="description" content="Track daily milk deliveries, skipped days, the monthly bill and advance payments. Sign in with Google to see your records on any phone.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
@@ -69,6 +70,7 @@ input{width:100%;margin-top:4px;min-height:46px;border-radius:12px;border:1px so
 ul{list-style:none;margin:12px 0 0;padding:0}
 li{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:6px 0;font-size:15px}
 li button{background:none;border:0;color:var(--nink);min-height:40px;padding:0 6px;text-decoration:underline}
+.gbtn{min-height:50px;padding:0 24px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-weight:600;margin-top:14px}
 #gate{max-width:480px;margin:0 auto;padding:48px 20px;text-align:center}
 #gate h2{font-size:22px;margin:0 0 10px}
 #gate p{color:var(--muted)}
@@ -116,7 +118,8 @@ li button{background:none;border:0;color:var(--nink);min-height:40px;padding:0 6
     </div>
     <p class="hint">A new rate applies only to new entries. Old entries keep the rate they were saved with.</p>
   </section>
-  <p class="hint" style="text-align:center;margin-top:16px">Your records are saved only in this browser on this phone. Clearing browser data will delete them.</p>
+  <p class="hint" style="text-align:center;margin-top:16px">Signed in as <b id="who"></b>. Your records are private to your Google account.</p>
+  <button class="lnk" id="so">Sign out</button>
 </main>
 
 <div class="bd" id="bd" hidden>
@@ -146,7 +149,21 @@ li button{background:none;border:0;color:var(--nink);min-height:40px;padding:0 6
   </div>
 </div>
 
-<script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,collection,doc,setDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* Paste your Firebase web app config here (Project settings > Your apps > Web app). */
+const firebaseConfig={
+  apiKey:"AIzaSyDo00YxPnm9qXLGnzwt1eZf8s4V9__uMZA",
+  authDomain:"milktrackerchaibasa.firebaseapp.com",
+  projectId:"milktrackerchaibasa",
+  storageBucket:"milktrackerchaibasa.firebasestorage.app",
+  messagingSenderId:"322248186176",
+  appId:"1:322248186176:web:ca6f731482e172664dc2a5"
+};
+
 (function(){
   var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var WD=['Su','Mo','Tu','We','Th','Fr','Sa'];
@@ -166,18 +183,24 @@ li button{background:none;border:0;color:var(--nink);min-height:40px;padding:0 6
   function gate(kind){
     clearTimeout(tm);
     var T={
-      signin:['Sign in to continue','Sign in to your Claude account, then open this link again. Your milk records are saved to the account, so you see the same data on any phone where you are signed in with it.'],
-      access:['Access needed','Ask the owner of this page to share it with you with Contributor access in the Share menu. Then open the link again.'],
-      slow:['Could not load your records','Check your internet connection and open this link again.']
+      signin:['Milk Tracker','Sign in with your Google account to see your milk records on any phone.'],
+      slow:['Could not load your records','Check your internet connection and open this page again.'],
+      config:['Setup needed','Paste your Firebase config into the firebaseConfig section of this file.']
     }[kind];
     $('#app').hidden=true;$('#gate').hidden=false;
     $('#gate').innerHTML='<h2></h2><p></p>';
     $('#gate h2').textContent=T[0];$('#gate p').textContent=T[1];
+    if(kind==='signin'){
+      var b=document.createElement('button');b.className='gbtn';b.textContent='Sign in with Google';
+      b.addEventListener('click',signIn);$('#gate').appendChild(b);
+    }
   }
 
   function status(t){$('#sync').textContent=t}
-  function put(){
-    try{localStorage.setItem('milk-tracker-v1',JSON.stringify(st));status('Saved on this phone')}catch(e){status('Could not save')}
+  function put(id,body){
+    var copy=JSON.parse(JSON.stringify(body));
+    status('Saving…');
+    q=q.then(function(){return setDoc(doc(db,'users',uid,'records',id),copy)}).then(function(){status('Saved')},function(){status('Not saved, check connection')});
   }
 
   function onData(snap){
@@ -312,9 +335,30 @@ li button{background:none;border:0;color:var(--nink);min-height:40px;padding:0 6
     delete st.adv[id];put('advance',{items:st.adv});render();advList();
   });
 
+  var app=null,auth=null,db=null,uid=null,unsub=null;
+  function resetState(){
+    if(unsub){unsub();unsub=null}
+    ready=false;st={s:{l:0.5,r:60},months:{},adv:{}};q=Promise.resolve();$('#app').hidden=true;
+  }
+  function signIn(){
+    signInWithPopup(auth,new GoogleAuthProvider()).catch(function(e){
+      if(e&&e.code==='auth/popup-closed-by-user')return;
+      $('#gate p').textContent='Sign-in failed ('+((e&&e.code)||'error')+'). Please try again.';
+    });
+  }
+  function start(u){
+    uid=u.uid;$('#who').textContent=u.email||u.displayName||'';
+    $('#gate').hidden=false;$('#gate').innerHTML='<h2>Loading…</h2><p>Opening your milk records.</p>';
+    tm=setTimeout(function(){gate('slow')},10000);
+    unsub=onSnapshot(collection(db,'users',uid,'records'),onData,function(){if(ready)status('Sync problem');else gate('slow')});
+  }
   function init(){
-    try{var raw=localStorage.getItem('milk-tracker-v1');if(raw){var p=JSON.parse(raw);if(p&&p.s&&p.months&&p.adv)st=p}}catch(e){}
-    ready=true;$('#gate').hidden=true;$('#app').hidden=false;status('Saved on this phone');render();
+    if(String(firebaseConfig.apiKey).indexOf('PASTE')===0){gate('config');return}
+    try{
+      app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app);
+      $('#so').addEventListener('click',function(){signOut(auth)});
+      onAuthStateChanged(auth,function(u){resetState();if(u)start(u);else gate('signin')});
+    }catch(e){gate('slow')}
   }
   init();
 })();
